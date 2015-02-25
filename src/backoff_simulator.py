@@ -57,6 +57,12 @@ class Stats:
         self.failures = 0
         self.calls = 0
 
+# Build a message to be added to the simulated network
+def msg(tm, send_to, reply_to, payload):
+    assert tm >= 0
+    assert send_to is not None
+    return (tm, send_to, reply_to, payload)
+
 # The OCC server. It models a single "row" with a single version.
 class OccServer:
     def __init__(self, net, stats, ts_f):
@@ -76,11 +82,11 @@ class OccServer:
             success = True
         else:
             self.stats.failures += 1
-        return (tm + self.net.delay(), request[2], None, success)
+        return msg(tm + self.net.delay(), request[2], None, success)
 
     # Read the current version number of the row.
     def read(self, tm, request):
-        return (tm + self.net.delay(), request[2], None, self.version)
+        return msg(tm + self.net.delay(), request[2], None, self.version)
 
 # The OCC client. It models a client that tries to update the row exactly once,
 # then stops.        
@@ -92,15 +98,15 @@ class OccClient:
         self.backoff = backoff
     
     def start(self, tm):
-        return (tm + self.net.delay(), self.server.read, self.read_rsp)
+        return msg(tm + self.net.delay(), self.server.read, self.read_rsp, None)
         
     def read_rsp(self, tm, request):
-        return (tm + self.net.delay(), self.server.write, self.write_rsp, request[3])
+        return msg(tm + self.net.delay(), self.server.write, self.write_rsp, request[3])
         
     def write_rsp(self, tm, request):
         if not request[3]:
             self.attempt += 1
-            return (tm + self.net.delay() + self.backoff.backoff(self.attempt), self.server.read, self.read_rsp)
+            return msg(tm + self.net.delay() + self.backoff.backoff(self.attempt), self.server.read, self.read_rsp, None)
         else:
             return None
 
@@ -110,6 +116,7 @@ def run_sim(queue):
     while len(queue) > 0:
         # Pull an event off the priority queue
         msg = heapq.heappop(queue)
+        assert msg[0] >= tm # TIme must move forward
         tm = msg[0]
         next_msg = msg[1](tm, msg)
         if next_msg is not None:
