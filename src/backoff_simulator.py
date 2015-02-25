@@ -68,7 +68,7 @@ class OccServer:
     # Try to write the row. If you provide the right version number (obtained from a read),
     # the write will succeed.
     def write(self, tm, request):
-        self.ts_f.write("%d\n"%(tm))        
+        self.ts_f.write("%d\n"%(tm))
         success = False
         self.stats.calls += 1
         if request[3] == self.version:
@@ -127,23 +127,26 @@ def setup_sim(clients, backoff_cls, ts_f, stats):
         heapq.heappush(queue, client.start(0))
     return (queue, stats)
 
+# The list of backoff types that we simulate over. The tuples are a class
+#  name and a friendly name for the output.
+backoff_types = ((ExpoBackoff, "Exponential"),
+                 (ExpoBackoffDecorr,"Decorr"),
+                 (ExpoBackoffEqualJitter, "EqualJitter"),
+                 (ExpoBackoffFullJitter, "FullJitter"),
+                 (NoBackoff, "None"))
+
 def run():
-    f = open("backoff_results.csv", "w")    
-    f.write("clients,time,calls,Algorithm\n")
-    for i in xrange(1, 20):
-        clients = i * 10
-        for backoff in ((ExpoBackoff, "Exponential"), (ExpoBackoffDecorr,"Decorr"), (ExpoBackoffEqualJitter, "EqualJitter"), (ExpoBackoffFullJitter, "FullJitter"), (NoBackoff, "None")):
-            with open("ts_" + backoff[1], "w") as ts_f:
-                stats = Stats()
-                tm = 0
-                for t in xrange(0, 100):
-                    queue, stats = setup_sim(clients, backoff[0], ts_f, stats)
-                    tm += run_sim(queue)
-                f.write("%d,%d,%d,%s\n"%(clients, tm/100, stats.calls/100, backoff[1]))
-    f.close()
-    
+    with open("backoff_results.csv", "w") as f:
+        f.write("clients,time,calls,Algorithm\n")
+        for i in xrange(1, 20):
+            clients = i * 10
+            for backoff in backoff_types:
+                with open("ts_" + backoff[1], "w") as ts_f:
+                    stats = Stats()
+                    tm = 0
+                    for t in xrange(0, 100):
+                        queue, stats = setup_sim(clients, backoff[0], ts_f, stats)
+                        tm += run_sim(queue)
+                    f.write("%d,%d,%d,%s\n"%(clients, tm/100, stats.calls/100, backoff[1]))
+                    
 run()
-    
-# gg <- ggplot(d, aes(x = clients, y = time, color=Algorithm)) + geom_line() + ylab("Completion Time (s)") + xlab("Competing Clients"); gg
-# cat ts_Exponential| sort | uniq -c | awk '{printf "%s,%s\n",$1,$2}' > ts_Exponential_g
-# gg <- ggplot(d[d$Algorithm %in% c("None","FullJitter","Decorr", "EqualJitter", "Exponential"),], aes(x = clients, y = calls, color=Algorithm)) + geom_line() + ylab("Client Work") + xlab("Competing Clients") + xlim(0, 100) + ylim(0, 2500); gg
