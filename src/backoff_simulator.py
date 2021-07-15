@@ -4,6 +4,13 @@
 import heapq
 import random
 
+def xrange(a, b):
+    import sys
+    if sys.version_info.major >= 3:
+        return __builtins__.range(a, b)
+    else:
+        return __builtins__.xrange(a, b)
+
 # Net models the natural delay and variance of the network
 class Net:
     def __init__(self, mean, sd):
