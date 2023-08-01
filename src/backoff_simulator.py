@@ -145,26 +145,18 @@ backoff_types = ((ExpoBackoff, "Exponential"),
                  (NoBackoff, "None"))
 
 range_max = 5
-
-# create list with numbers 1 through 5
-
-
-
-
-
-
-times = pd.DataFrame(columns=[types[1] for types in backoff_types], index=[x for x in range(10, (range_max + 1) * 10, 10)])
+times = pd.DataFrame(
+    columns=[types[1] for types in backoff_types],
+    index=[x for x in range(10, (range_max + 1) * 10, 10)]
+)
 calls = times.copy()
-
-print(times.index)
-print("and")
-print(calls)
 def run():
     with open("backoff_results.csv", "w") as f:
         f.write("clients,time,calls,Algorithm\n")
-
-        for i in range(1, range_max):
+        for i in range(1, range_max + 1):
             clients = i * 10
+            time_new_row = []
+            calls_new_row = []
             for backoff in backoff_types:
                 with open("ts_" + backoff[1], "w") as ts_f:
                     stats = Stats()
@@ -173,11 +165,15 @@ def run():
                         queue, stats = setup_sim(clients, backoff[0], ts_f, stats)
                         tm += run_sim(queue)
                     f.write("%d,%d,%d,%s\n"%(clients, tm/100, stats.calls/100, backoff[1]))
-                    next_row = [clients, tm/100, stats.calls/100, backoff[1]]
-                    results.loc[len(results.index)] = next_row
+                    time_new_row.append(tm/100)
+                    calls_new_row.append(stats.calls/100)
                 print(". ", end="")
+            times.loc[clients] = time_new_row
+            calls.loc[clients] = calls_new_row
             print(f"{i} of {range_max}")
 
 run()
+print(times)
+print(calls)
 
 
