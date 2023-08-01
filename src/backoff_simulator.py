@@ -3,6 +3,9 @@
 # at http://www.awsarchitectureblog.com/
 import heapq
 import random
+import pandas as pd
+import bokeh.plotting as plt
+
 
 # Net models the natural delay and variance of the network
 class Net:
@@ -145,7 +148,8 @@ backoff_types = ((ExpoBackoff, "Exponential"),
 def run():
     with open("backoff_results.csv", "w") as f:
         f.write("clients,time,calls,Algorithm\n")
-        for i in range(1, 20):
+        rangemax = 20
+        for i in range(1, rangemax):
             clients = i * 10
             for backoff in backoff_types:
                 with open("ts_" + backoff[1], "w") as ts_f:
@@ -155,5 +159,7 @@ def run():
                         queue, stats = setup_sim(clients, backoff[0], ts_f, stats)
                         tm += run_sim(queue)
                     f.write("%d,%d,%d,%s\n"%(clients, tm/100, stats.calls/100, backoff[1]))
-                    
+                print(". ", end="")
+            print(f"{i} of {rangemax}")
+
 run()
