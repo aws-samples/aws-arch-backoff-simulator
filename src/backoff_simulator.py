@@ -129,7 +129,7 @@ def setup_sim(clients, backoff_cls, ts_f, stats):
     net = Net(10, 2)
     queue = []
     server = OccServer(net, stats, ts_f)
-    for i in xrange(0, clients):
+    for i in range(0, clients):
         client = OccClient(server, net, backoff_cls(5, 2000))
         heapq.heappush(queue, client.start(0))
     return (queue, stats)
@@ -145,13 +145,13 @@ backoff_types = ((ExpoBackoff, "Exponential"),
 def run():
     with open("backoff_results.csv", "w") as f:
         f.write("clients,time,calls,Algorithm\n")
-        for i in xrange(1, 20):
+        for i in range(1, 20):
             clients = i * 10
             for backoff in backoff_types:
                 with open("ts_" + backoff[1], "w") as ts_f:
                     stats = Stats()
                     tm = 0
-                    for t in xrange(0, 100):
+                    for t in range(0, 100):
                         queue, stats = setup_sim(clients, backoff[0], ts_f, stats)
                         tm += run_sim(queue)
                     f.write("%d,%d,%d,%s\n"%(clients, tm/100, stats.calls/100, backoff[1]))
