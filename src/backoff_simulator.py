@@ -6,7 +6,6 @@ import random
 import pandas as pd
 import bokeh.plotting as plt
 
-
 # Net models the natural delay and variance of the network
 class Net:
     def __init__(self, mean, sd):
@@ -145,11 +144,26 @@ backoff_types = ((ExpoBackoff, "Exponential"),
                  (ExpoBackoffFullJitter, "FullJitter"),
                  (NoBackoff, "None"))
 
+range_max = 5
+
+# create list with numbers 1 through 5
+
+
+
+
+
+
+times = pd.DataFrame(columns=[types[1] for types in backoff_types], index=[x for x in range(10, (range_max + 1) * 10, 10)])
+calls = times.copy()
+
+print(times.index)
+print("and")
+print(calls)
 def run():
     with open("backoff_results.csv", "w") as f:
         f.write("clients,time,calls,Algorithm\n")
-        rangemax = 20
-        for i in range(1, rangemax):
+
+        for i in range(1, range_max):
             clients = i * 10
             for backoff in backoff_types:
                 with open("ts_" + backoff[1], "w") as ts_f:
@@ -159,7 +173,11 @@ def run():
                         queue, stats = setup_sim(clients, backoff[0], ts_f, stats)
                         tm += run_sim(queue)
                     f.write("%d,%d,%d,%s\n"%(clients, tm/100, stats.calls/100, backoff[1]))
+                    next_row = [clients, tm/100, stats.calls/100, backoff[1]]
+                    results.loc[len(results.index)] = next_row
                 print(". ", end="")
-            print(f"{i} of {rangemax}")
+            print(f"{i} of {range_max}")
 
 run()
+
+
