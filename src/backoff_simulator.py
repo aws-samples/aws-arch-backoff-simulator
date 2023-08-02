@@ -5,6 +5,7 @@ import heapq
 import random
 import pandas as pd
 import bokeh.plotting as plt
+import bokeh.colors as clr
 
 # Net models the natural delay and variance of the network
 class Net:
@@ -144,17 +145,18 @@ backoff_types = ((ExpoBackoff, "Exponential"),
                  (ExpoBackoffFullJitter, "FullJitter"),
                  (NoBackoff, "None"))
 
+client_multiplier = 10
 range_max = 5
 times = pd.DataFrame(
     columns=[types[1] for types in backoff_types],
-    index=[x for x in range(10, (range_max + 1) * 10, 10)]
+    index=[x for x in range(client_multiplier, (range_max + 1) * client_multiplier, client_multiplier)]
 )
 calls = times.copy()
 def run():
     with open("backoff_results.csv", "w") as f:
         f.write("clients,time,calls,Algorithm\n")
         for i in range(1, range_max + 1):
-            clients = i * 10
+            clients = i * client_multiplier
             time_new_row = []
             calls_new_row = []
             for backoff in backoff_types:
@@ -173,7 +175,10 @@ def run():
             print(f"{i} of {range_max}")
 
 run()
-print(times)
-print(calls)
 
+# Plot the results with bokeh
+p = plt.figure(title="Time", x_axis_label='Clients', y_axis_label='milliseconds')
+for col in range(0, len(times.columns)):
+    p.line(times.index, times[times.columns[col]], legend_label=times.columns[col], line_width=2, color=clr.RGB(0, 0, 255 - (col * 50)))
+plt.show(p)
 
